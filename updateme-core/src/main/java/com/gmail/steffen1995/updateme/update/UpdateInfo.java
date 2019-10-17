@@ -73,7 +73,7 @@ public class UpdateInfo {
    * @return the parsed {@link UpdateInfo}
    * @throws IOException when the file cannot be read or the file cannot be parsed
    */
-  public UpdateInfo readFromFile(String pathToFile) throws IOException {
+  public static UpdateInfo readFromFile(String pathToFile) throws IOException {
     String json = new String(Files.readAllBytes(Paths.get(pathToFile)), StandardCharsets.UTF_8);
     JSONObject rootObject = new JSONObject(json);
 
@@ -105,7 +105,7 @@ public class UpdateInfo {
    * @return the parsed {@link UpdateInfo}
    * @throws IOException when the file cannot be read or the file cannot be parsed
    */
-  public UpdateInfo readFromFile(File infoFile) throws IOException {
+  public static UpdateInfo readFromFile(File infoFile) throws IOException {
     return readFromFile(infoFile.getAbsolutePath());
   }
 
@@ -132,7 +132,7 @@ public class UpdateInfo {
    * Representation of an update file.
    */
   @Value @Builder
-  private static class FileUpdate {
+  public static class FileUpdate {
     private String localPath;
     private String checksum;
     private long sizeBytes;

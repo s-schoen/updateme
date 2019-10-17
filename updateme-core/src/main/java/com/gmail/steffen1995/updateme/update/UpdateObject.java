@@ -43,17 +43,6 @@ public class UpdateObject {
   }
 
   /**
-   * Constructor.
-   * @param pathToFile the path to the file that is required to be updated
-   * @param basePath the path of this file relative to the application root
-   * @param checksum the checksum of the file, encoded in Base64
-   */
-  public UpdateObject(String pathToFile, String basePath, String checksum) {
-    this(pathToFile, basePath);
-    this.checksum = checksum;
-  }
-
-  /**
    * Calculates the SHA-256 checksum of the file.
    * @throws IOException when the file cannot be opened
    */
