@@ -2,7 +2,15 @@ package com.gmail.steffen1995.updateme.update;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

@@ -21,6 +21,7 @@ import lombok.Getter;
 public class UpdateObject {
   private File file;
   private String basePath;
+  private String checksum;
 
   /**
    * Constructor.
@@ -42,12 +43,22 @@ public class UpdateObject {
   }
 
   /**
+   * Constructor.
+   * @param pathToFile the path to the file that is required to be updated
+   * @param basePath the path of this file relative to the application root
+   * @param checksum the checksum of the file, encoded in Base64
+   */
+  public UpdateObject(String pathToFile, String basePath, String checksum) {
+    this(pathToFile, basePath);
+    this.checksum = checksum;
+  }
+
+  /**
    * Calculates the SHA-256 checksum of the file.
-   * @return the Base64 encoded checksum
    * @throws IOException when the file cannot be opened
    */
-  public String getChecksum() throws IOException {
-    return HashCalculator.sha256(file);
+  public void calculateChecksum() throws IOException {
+    checksum = HashCalculator.sha256(file);
   }
 
   /**
