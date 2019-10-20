@@ -144,14 +144,13 @@ public class Update {
 
     // add update objects to update
     Files.list(tmpDir).filter(path -> !path.getFileName().toString().equals("updateInfo.json")).forEach(f -> {
-      UpdateObject updateObject = new UpdateObject(f.toString(), "/");
-      try {
-        updateObject.calculateChecksum();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      update.getUpdateObjects().add(updateObject);
+      update.getUpdateObjects().add(new UpdateObject(f.toString(), "/"));
     });
+
+    // calculate checksums for update objects
+    for (UpdateObject updateObject :update.getUpdateObjects()) {
+      updateObject.calculateChecksum();
+    }
 
     return update;
   }

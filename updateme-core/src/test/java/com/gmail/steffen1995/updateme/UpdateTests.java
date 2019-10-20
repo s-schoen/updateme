@@ -104,8 +104,6 @@ public class UpdateTests {
     assertEquals(update.getUpdateObjects().size(), unpacked.getUpdateObjects().size());
 
     for (UpdateObject uo: update.getUpdateObjects()) {
-      String fileName = uo.getFile().getName();
-
       for (UpdateObject uo2: unpacked.getUpdateObjects()) {
         if (uo2.getChecksum().equals(uo.getChecksum())){
           Path unpackedFile = Paths.get(uo2.getFile().getAbsolutePath());
@@ -116,5 +114,25 @@ public class UpdateTests {
         }
       }
     }
+  }
+
+  @Test(expected = UpdateException.class)
+  public void unpackInfoMissing() throws IOException, UpdateException {
+    Update.unpack(UpdateTests.class.getResource("/update_info_missing.zip").getPath());
+  }
+
+  @Test(expected = UpdateException.class)
+  public void unpackFileMissing() throws IOException, UpdateException {
+    Update.unpack(UpdateTests.class.getResource("/update_file_missing.zip").getPath());
+  }
+
+  @Test(expected = UpdateException.class)
+  public void unpackChecksumWrong() throws IOException, UpdateException {
+    Update.unpack(UpdateTests.class.getResource("/update_checksum_wrong.zip").getPath());
+  }
+
+  @Test(expected = IOException.class)
+  public void updateInfoWrongDateFormat() throws IOException {
+    UpdateInfo.readFromFile(UpdateTests.class.getResource("/updateInfo_wrong_data_format.json").getPath());
   }
 }
