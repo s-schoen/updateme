@@ -17,7 +17,8 @@ import lombok.Getter;
  * A representation of an object that is relevant for updates.
  * @author Steffen Schoen
  */
-@EqualsAndHashCode @Getter
+@EqualsAndHashCode
+@Getter
 public class UpdateObject {
   private File file;
   private String basePath;
@@ -57,7 +58,8 @@ public class UpdateObject {
    * @return a list of {@link UpdateObject}
    * @throws IOException when the files in the directory cannot be listed
    */
-  public static List<UpdateObject> fromDirectory(File directory, String basePath) throws IOException {
+  public static List<UpdateObject> fromDirectory(File directory, String basePath)
+          throws IOException {
     return fromDirectory(directory.getAbsolutePath(), basePath);
   }
 
@@ -68,7 +70,8 @@ public class UpdateObject {
    * @return a list of {@link UpdateObject}
    * @throws IOException when the files in the directory cannot be listed
    */
-  public static List<UpdateObject> fromDirectory(String pathToDirectory, String basePath) throws IOException {
+  public static List<UpdateObject> fromDirectory(String pathToDirectory, String basePath)
+          throws IOException {
     Objects.requireNonNull(pathToDirectory);
     List<UpdateObject> updateObjects = new ArrayList<>();
 

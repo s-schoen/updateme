@@ -47,46 +47,6 @@ public class Update {
   }
 
   /**
-   * Packages an update, i.e. all files associated with the update, including an update info into a compressed file.
-   * @param filePath The path to the compressed update file
-   * @throws IOException when something went wrong while packaging the update
-   */
-  public void pack(String filePath) throws IOException {
-    // create temp directory
-    Path tmpDir = Files.createTempDirectory(version);
-
-    // create update info file
-    UpdateInfo updateInfo = UpdateInfo.fromUpdate(this);
-    updateInfo.writeToFile(Paths.get(tmpDir.toString(), "updateInfo.json").toString());
-
-    // zip files
-    try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(filePath))) {
-      // updateInfo.json
-      try (FileInputStream fis = new FileInputStream(Paths.get(tmpDir.toString(), "updateInfo.json").toString())) {
-        zipOut.putNextEntry(new ZipEntry("updateInfo.json"));
-
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = fis.read(buffer)) >= 0) {
-          zipOut.write(buffer, 0, length);
-        }
-      }
-
-      for (UpdateObject uo: updateObjects) {
-        try (FileInputStream fis = new FileInputStream(Paths.get(uo.getFile().getAbsolutePath()).toString())) {
-          zipOut.putNextEntry(new ZipEntry(uo.getFile().getName()));
-
-          byte[] buffer = new byte[1024];
-          int length;
-          while ((length = fis.read(buffer)) >= 0) {
-            zipOut.write(buffer, 0, length);
-          }
-        }
-      }
-    }
-  }
-
-  /**
    * Unpacks an update from a compressed update file.
    * @param updateFile the compressed update to unpack
    * @return the unpacked update
@@ -142,9 +102,10 @@ public class Update {
     }
 
     // add update objects to update
-    Files.list(tmpDir).filter(path -> !path.getFileName().toString().equals("updateInfo.json")).forEach(f -> {
-      update.getUpdateObjects().add(new UpdateObject(f.toString(), "/"));
-    });
+    Files
+            .list(tmpDir)
+            .filter(path -> !path.getFileName().toString().equals("updateInfo.json"))
+            .forEach(f -> update.getUpdateObjects().add(new UpdateObject(f.toString(), "/")));
 
     // calculate checksums for update objects
     for (UpdateObject updateObject :update.getUpdateObjects()) {
@@ -163,5 +124,48 @@ public class Update {
    */
   public static Update unpack(String updateFile) throws IOException, UpdateException {
     return unpack(new File(updateFile));
+  }
+
+  /**
+   * Packages an update, i.e. all files associated with the update, including an update info into a
+   * compressed file.
+   * @param filePath The path to the compressed update file
+   * @throws IOException when something went wrong while packaging the update
+   */
+  public void pack(String filePath) throws IOException {
+    // create temp directory
+    Path tmpDir = Files.createTempDirectory(version);
+
+    // create update info file
+    UpdateInfo updateInfo = UpdateInfo.fromUpdate(this);
+    updateInfo.writeToFile(Paths.get(tmpDir.toString(), "updateInfo.json").toString());
+
+    // zip files
+    try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(filePath))) {
+      // updateInfo.json
+      try (FileInputStream fis = new FileInputStream(Paths.get(tmpDir.toString(),
+              "updateInfo.json").toString())) {
+        zipOut.putNextEntry(new ZipEntry("updateInfo.json"));
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = fis.read(buffer)) >= 0) {
+          zipOut.write(buffer, 0, length);
+        }
+      }
+
+      for (UpdateObject uo: updateObjects) {
+        try (FileInputStream fis =
+                     new FileInputStream(Paths.get(uo.getFile().getAbsolutePath()).toString())) {
+          zipOut.putNextEntry(new ZipEntry(uo.getFile().getName()));
+
+          byte[] buffer = new byte[1024];
+          int length;
+          while ((length = fis.read(buffer)) >= 0) {
+            zipOut.write(buffer, 0, length);
+          }
+        }
+      }
+    }
   }
 }

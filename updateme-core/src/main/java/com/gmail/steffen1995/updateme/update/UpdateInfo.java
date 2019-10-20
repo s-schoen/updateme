@@ -1,6 +1,10 @@
 package com.gmail.steffen1995.updateme.update;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.Value;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,7 +24,9 @@ import java.util.List;
  * Represents the info of an update.
  * @author Steffen Schoen
  */
-@EqualsAndHashCode @Getter @Setter
+@EqualsAndHashCode
+@Getter
+@Setter
 public class UpdateInfo {
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -131,7 +137,8 @@ public class UpdateInfo {
   /**
    * Representation of an update file.
    */
-  @Value @Builder
+  @Value
+  @Builder
   public static class FileUpdate {
     private String localPath;
     private String checksum;

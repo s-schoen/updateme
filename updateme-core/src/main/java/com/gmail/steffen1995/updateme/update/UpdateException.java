@@ -5,16 +5,10 @@ package com.gmail.steffen1995.updateme.update;
  * @author Steffen Schoen
  */
 public class UpdateException extends Exception {
-  /**
-   * {@inheritDoc}
-   */
   public UpdateException(String message) {
     super(message);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public UpdateException(String message, Throwable cause) {
     super(message, cause);
   }
