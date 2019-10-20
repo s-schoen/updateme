@@ -1,18 +1,23 @@
 package com.gmail.steffen1995.updateme;
 
 import com.gmail.steffen1995.updateme.update.Update;
+import com.gmail.steffen1995.updateme.update.UpdateException;
 import com.gmail.steffen1995.updateme.update.UpdateInfo;
 import com.gmail.steffen1995.updateme.update.UpdateObject;
+import com.gmail.steffen1995.updateme.util.HashCalculator;
 import com.gmail.steffen1995.updateme.util.TestUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for classes regarding updates.
@@ -84,5 +89,32 @@ public class UpdateTests {
     assertEquals(info.getVersion(), parsed.getVersion());
     TestUtils.assertEqualDates(info.getPublishDate(), parsed.getPublishDate());
     assertEquals(2, parsed.getFileUpdates().size());
+  }
+
+  @Test
+  public void packTest() throws IOException, UpdateException {
+    Path tmpDir = Files.createTempDirectory("updateme");
+    String updateFile = Paths.get(tmpDir.toString(), "update.zip").toString();
+
+    update.pack(updateFile);
+    Update unpacked = Update.unpack(updateFile);
+
+    assertEquals(update.getVersion(), unpacked.getVersion());
+    TestUtils.assertEqualDates(update.getPublishDate(), unpacked.getPublishDate());
+    assertEquals(update.getUpdateObjects().size(), unpacked.getUpdateObjects().size());
+
+    for (UpdateObject uo: update.getUpdateObjects()) {
+      String fileName = uo.getFile().getName();
+
+      for (UpdateObject uo2: unpacked.getUpdateObjects()) {
+        if (uo2.getChecksum().equals(uo.getChecksum())){
+          Path unpackedFile = Paths.get(uo2.getFile().getAbsolutePath());
+
+          assertTrue(Files.exists(unpackedFile));
+          String hash = HashCalculator.sha256(new File(unpackedFile.toString()));
+          assertEquals(uo.getChecksum(), hash);
+        }
+      }
+    }
   }
 }
