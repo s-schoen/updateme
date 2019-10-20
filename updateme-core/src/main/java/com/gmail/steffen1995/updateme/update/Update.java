@@ -5,16 +5,14 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -27,7 +25,8 @@ import java.util.zip.ZipOutputStream;
  * The representation of an application update.
  * @author Steffen Schoen
  */
-@EqualsAndHashCode @Getter
+@EqualsAndHashCode
+@Getter
 public class Update {
   @Setter(AccessLevel.PRIVATE)
   private String version;
