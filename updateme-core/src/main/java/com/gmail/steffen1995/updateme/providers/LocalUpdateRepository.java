@@ -110,7 +110,7 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
       Files.walkFileTree(Paths.get(baseDirectory.toString(), channel), new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          if (!file.getFileName().toString().equals("updateInfo.json")) {
+          if (file.getFileName().toString().equals("updateInfo.json")) {
             updateInfoFiles.add(file.toFile());
           }
 
