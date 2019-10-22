@@ -1,26 +1,35 @@
 package com.gmail.steffen1995.updateme.providers;
 
 import com.gmail.steffen1995.updateme.update.Update;
-import com.gmail.steffen1995.updateme.update.UpdateException;
 import com.gmail.steffen1995.updateme.update.UpdateInfo;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.Objects;
+import java.util.concurrent.Executors;
 
 /**
  * Base class for update providers.
  * @author Steffen Schoen
  */
-public abstract class UpdateProvider {
+public class UpdateProvider {
   private List<UpdateFetchingProgressChangedListener> updateProgressChangedListeners;
   private List<UpdateFetchingProgressChangedListener> availableUpdateProgressChangedListeners;
 
+  private UpdateRepositoryManipulator repository;
+  private final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+
   /**
    * Constructor.
+   * @param repository The provider for update repository access that will be used
    */
-  public UpdateProvider() {
+  public UpdateProvider(UpdateRepositoryManipulator repository) {
+    this.repository = Objects.requireNonNull(repository);
+
     this.updateProgressChangedListeners = new ArrayList<>();
     this.availableUpdateProgressChangedListeners = new ArrayList<>();
   }
@@ -28,7 +37,8 @@ public abstract class UpdateProvider {
   /**
    * Registers a listener for the OnUpdateFetchingProgressChanged event. The event is fired when
    * the progress of fetching an {@link Update} changed after calling
-   * {@link UpdateProvider#fetchUpdate(String)} or {@link UpdateProvider#fetchUpdate(UpdateInfo)}.
+   * {@link UpdateProvider#fetchUpdate(String, String)} or
+   * {@link UpdateProvider#fetchUpdate(UpdateInfo, String)}.
    * @param listener the listener that will be invoked
    */
   public void addOnUpdateFetchingProgressChanged(UpdateFetchingProgressChangedListener listener) {
@@ -74,31 +84,44 @@ public abstract class UpdateProvider {
   /**
    * Fetches the {@link Update} that corresponds with the given {@link UpdateInfo}.
    * @param updateToFetch the update to fetch
+   * @param channel the deployment channel to fetch the update from
    * @return the fetched {@link Update}
-   * @throws IOException when the update package could not be read.
-   * @throws UpdateException when an error occurred during the update process.
    */
-  public Future<Update> fetchUpdate(UpdateInfo updateToFetch) throws IOException, UpdateException {
-    return fetchUpdate(updateToFetch.getVersion());
+  public ListenableFuture<Update> fetchUpdate(UpdateInfo updateToFetch, String channel) {
+    return fetchUpdate(updateToFetch.getVersion(), channel);
   }
 
   /**
    * Fetches the {@link Update} with the given version.
    * @param version the version to fetch
+   * @param channel the deployment channel to fetch the update from
    * @return the fetched {@link Update}
-   * @throws IOException when the update package could not be read.
-   * @throws UpdateException when an error occurred during the update process.
    */
-  public abstract Future<Update> fetchUpdate(String version) throws IOException, UpdateException;
+  public ListenableFuture<Update> fetchUpdate(String version, String channel) {
+    return executorService.submit(() -> {
+      File updatePackage = repository.pullUpdate(version, channel);
+
+      return Update.unpack(updatePackage);
+    });
+  }
 
   /**
    * Fetch all available updates.
    * @param channel the deployment channel to fetch the updates from
    * @return a list of {@link UpdateInfo} of all available updates in the specified channel
-   * @throws IOException when the update package could not be read.
-   * @throws UpdateException when an error occurred during the update process.
    */
-  public abstract Future<List<UpdateInfo>> fetchAvailableUpdates(String channel) throws IOException, UpdateException;
+  public ListenableFuture<List<UpdateInfo>> fetchAvailableUpdates(String channel) {
+    return executorService.submit(() -> {
+      List<UpdateInfo> updateInfos = new ArrayList<>();
+      List<File> updateInfoFiles = repository.updateInfoFiles(channel);
+
+      for (File f: updateInfoFiles) {
+        updateInfos.add(UpdateInfo.readFromFile(f));
+      }
+
+      return updateInfos;
+    });
+  }
 
   @FunctionalInterface
   public interface UpdateFetchingProgressChangedListener {
