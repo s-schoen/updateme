@@ -32,7 +32,7 @@ public class UpdateConfigParser {
    * @param propertiesFile the path to the properties file
    */
   public UpdateConfigParser(String propertiesFile) {
-    this.propertiesFile = new File(propertiesFile);
+    this(new File(propertiesFile));
   }
 
   /**
@@ -50,7 +50,7 @@ public class UpdateConfigParser {
         for (ConfigProperty val: ext.getProperties()) {
           String fileValue = properties.getProperty(val.getKey());
           if (fileValue != null) {
-            val.fromString(fileValue);
+            val.parseString(fileValue);
           }
         }
       }
