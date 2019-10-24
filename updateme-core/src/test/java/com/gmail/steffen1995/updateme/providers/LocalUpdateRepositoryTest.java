@@ -52,7 +52,7 @@ public class LocalUpdateRepositoryTest {
     File tmpBase = Files.createTempDirectory("updateme").toFile();
     LocalUpdateRepository tmpRepo = new LocalUpdateRepository(tmpBase);
 
-    tmpRepo.initStructure();
+    tmpRepo.initStructure(null);
 
     assertTrue(Files.exists(Paths.get(tmpBase.toString(), UpdateRepositoryManipulator.DEFAULT_CHANNEL)));
     assertTrue(Files.isDirectory(Paths.get(tmpBase.toString(), UpdateRepositoryManipulator.DEFAULT_CHANNEL)));
@@ -62,7 +62,7 @@ public class LocalUpdateRepositoryTest {
   public void createChannel() throws UpdateRepositoryException {
     String channelName = "testChannel";
 
-    repo.createChannel(channelName);
+    repo.createChannel(channelName, null);
 
     assertTrue(Files.exists(Paths.get(tmp.toString(), channelName)));
     assertTrue(Files.isDirectory(Paths.get(tmp.toString(), channelName)));
@@ -70,12 +70,12 @@ public class LocalUpdateRepositoryTest {
 
   @Test(expected = UpdateRepositoryException.class)
   public void createChannelAlreadyExists() throws UpdateRepositoryException {
-    repo.createChannel("stable");
+    repo.createChannel("stable", null);
   }
 
   @Test
   public void availableChannels() throws UpdateRepositoryException {
-    List<String> channels = repo.availableChannels();
+    List<String> channels = repo.availableChannels(null);
 
     System.out.println(Arrays.toString(channels.toArray()));
 
@@ -89,7 +89,7 @@ public class LocalUpdateRepositoryTest {
     File update = new File(LocalUpdateRepositoryTest.class.getResource("/valid_update.zip").getPath());
     Update u = Update.unpack(update);
 
-    repo.pushUpdate(update, "test");
+    repo.pushUpdate(update, "test", null);
 
     assertTrue(Files.exists(Paths.get(tmp.toString(), "test", "1.0.0", "data.zip")));
     assertTrue(Files.exists(Paths.get(tmp.toString(), "test", "1.0.0", "updateInfo.json")));
@@ -105,24 +105,24 @@ public class LocalUpdateRepositoryTest {
 
   @Test
   public void pullUpdate() throws UpdateRepositoryException {
-    File updatePackage = repo.pullUpdate("1.0.0", "stable");
+    File updatePackage = repo.pullUpdate("1.0.0", "stable", null);
 
     assertEquals(Paths.get(tmp.toString(), "stable", "1.0.0", "data.zip").toString(), updatePackage.getAbsolutePath());
   }
 
   @Test(expected = UpdateRepositoryException.class)
   public void pullUpdateNoVersion() throws UpdateRepositoryException {
-    repo.pullUpdate("2.0.0", "stable");
+    repo.pullUpdate("2.0.0", "stable", null);
   }
 
   @Test(expected = UpdateRepositoryException.class)
   public void pullUpdateNoPackage() throws UpdateRepositoryException {
-    repo.pullUpdate("2.0.0", "test");
+    repo.pullUpdate("2.0.0", "test", null);
   }
 
   @Test
   public void updateInfoFiles() throws UpdateRepositoryException {
-    List<File> updateInfos = repo.updateInfoFiles("stable");
+    List<File> updateInfos = repo.updateInfoFiles("stable", null);
 
     assertEquals(1, updateInfos.size());
     assertEquals(Paths.get(tmp.toString(), "stable", "1.0.0", "updateInfo.json").toString(), updateInfos.get(0).getAbsolutePath());
