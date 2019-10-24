@@ -1,15 +1,16 @@
 package com.gmail.steffen1995.updateme.providers;
 
 import com.gmail.steffen1995.updateme.update.Update;
+import com.gmail.steffen1995.updateme.update.UpdateException;
 import com.gmail.steffen1995.updateme.update.UpdateInfo;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -21,7 +22,7 @@ public class UpdateProvider {
   private List<UpdateFetchingProgressChangedListener> availableUpdateProgressChangedListeners;
 
   private UpdateRepositoryManipulator repository;
-  private final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   /**
    * Constructor.
@@ -87,7 +88,7 @@ public class UpdateProvider {
    * @param channel the deployment channel to fetch the update from
    * @return the fetched {@link Update}
    */
-  public ListenableFuture<Update> fetchUpdate(UpdateInfo updateToFetch, String channel) {
+  public CompletableFuture<Update> fetchUpdate(UpdateInfo updateToFetch, String channel) {
     return fetchUpdate(updateToFetch.getVersion(), channel);
   }
 
@@ -97,12 +98,19 @@ public class UpdateProvider {
    * @param channel the deployment channel to fetch the update from
    * @return the fetched {@link Update}
    */
-  public ListenableFuture<Update> fetchUpdate(String version, String channel) {
-    return executorService.submit(() -> {
-      File updatePackage = repository.pullUpdate(version, channel);
+  public CompletableFuture<Update> fetchUpdate(String version, String channel) {
+    CompletableFuture<Update> future = new CompletableFuture<>();
 
-      return Update.unpack(updatePackage);
+    executorService.submit(() -> {
+      try {
+        File updatePackage = repository.pullUpdate(version, channel);
+        future.complete(Update.unpack(updatePackage));
+      } catch (UpdateRepositoryException | UpdateException | IOException e) {
+        future.completeExceptionally(e);
+      }
     });
+
+    return future;
   }
 
   /**
@@ -110,8 +118,10 @@ public class UpdateProvider {
    * @param channel the deployment channel to fetch the updates from
    * @return a list of {@link UpdateInfo} of all available updates in the specified channel
    */
-  public ListenableFuture<List<UpdateInfo>> fetchAvailableUpdates(String channel) {
-    return executorService.submit(() -> {
+  public CompletableFuture<List<UpdateInfo>> fetchAvailableUpdates(String channel) {
+    CompletableFuture<List<UpdateInfo>> future = new CompletableFuture<>();
+
+    executorService.submit(() -> {
       List<UpdateInfo> updateInfos = new ArrayList<>();
       List<File> updateInfoFiles = repository.updateInfoFiles(channel);
 
@@ -119,8 +129,10 @@ public class UpdateProvider {
         updateInfos.add(UpdateInfo.readFromFile(f));
       }
 
-      return updateInfos;
+      return future.complete(updateInfos);
     });
+
+    return future;
   }
 
   @FunctionalInterface
