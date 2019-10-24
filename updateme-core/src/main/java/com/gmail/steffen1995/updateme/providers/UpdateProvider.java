@@ -18,8 +18,8 @@ import java.util.concurrent.Executors;
  * @author Steffen Schoen
  */
 public class UpdateProvider {
-  private List<UpdateFetchingProgressChangedListener> updateProgressChangedListeners;
-  private List<UpdateFetchingProgressChangedListener> availableUpdateProgressChangedListeners;
+  private ProgressChangedListener updateProgressChangedListener;
+  private ProgressChangedListener availableUpdateProgressChangedListener;
 
   private UpdateRepositoryManipulator repository;
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -30,9 +30,6 @@ public class UpdateProvider {
    */
   public UpdateProvider(UpdateRepositoryManipulator repository) {
     this.repository = Objects.requireNonNull(repository);
-
-    this.updateProgressChangedListeners = new ArrayList<>();
-    this.availableUpdateProgressChangedListeners = new ArrayList<>();
   }
 
   /**
@@ -42,8 +39,8 @@ public class UpdateProvider {
    * {@link UpdateProvider#fetchUpdate(UpdateInfo, String)}.
    * @param listener the listener that will be invoked
    */
-  public void addOnUpdateFetchingProgressChanged(UpdateFetchingProgressChangedListener listener) {
-    this.updateProgressChangedListeners.add(listener);
+  public void setOnUpdateFetchingProgressChanged(ProgressChangedListener listener) {
+    this.updateProgressChangedListener = listener;
   }
 
   /**
@@ -52,34 +49,8 @@ public class UpdateProvider {
    * calling {@link UpdateProvider#fetchAvailableUpdates(String)}.
    * @param listener the listener to invoke
    */
-  public void addOnAvailableUpdateFetchingProgressChanged(UpdateFetchingProgressChangedListener listener) {
-    this.availableUpdateProgressChangedListeners.add(listener);
-  }
-
-  /**
-   * Fires the OnUpdateFetchingProgressChanged event.
-   * @param current current progress
-   * @param total total progress
-   */
-  protected void fireOnFetchingProgressChanged(long current, long total) {
-    for (UpdateFetchingProgressChangedListener l: updateProgressChangedListeners) {
-      if (l != null) {
-        l.onChange(current, total);
-      }
-    }
-  }
-
-  /**
-   * Fires the OnAvailableUpdateFetchingProgressChanged event.
-   * @param current current progress
-   * @param total total progress
-   */
-  protected void fireOnAvailableFetchingProgressChanged(long current, long total) {
-    for (UpdateFetchingProgressChangedListener l: availableUpdateProgressChangedListeners) {
-      if (l != null) {
-        l.onChange(current, total);
-      }
-    }
+  public void setOnAvailableUpdateFetchingProgressChanged(ProgressChangedListener listener) {
+    this.availableUpdateProgressChangedListener = listener;
   }
 
   /**
@@ -103,10 +74,12 @@ public class UpdateProvider {
 
     executorService.submit(() -> {
       try {
-        File updatePackage = repository.pullUpdate(version, channel);
+        File updatePackage = repository.pullUpdate(version, channel, updateProgressChangedListener);
         future.complete(Update.unpack(updatePackage));
       } catch (UpdateRepositoryException | UpdateException | IOException e) {
         future.completeExceptionally(e);
+      } finally {
+        ProgressChangedListener.fireComplete(updateProgressChangedListener);
       }
     });
 
@@ -123,25 +96,20 @@ public class UpdateProvider {
 
     executorService.submit(() -> {
       List<UpdateInfo> updateInfos = new ArrayList<>();
-      List<File> updateInfoFiles = repository.updateInfoFiles(channel);
+      try {
+        List<File> updateInfoFiles = repository.updateInfoFiles(channel, availableUpdateProgressChangedListener);
+        for (File f: updateInfoFiles) {
+          updateInfos.add(UpdateInfo.readFromFile(f));
+        }
 
-      for (File f: updateInfoFiles) {
-        updateInfos.add(UpdateInfo.readFromFile(f));
+        future.complete(updateInfos);
+      } catch (UpdateRepositoryException | IOException e) {
+        future.completeExceptionally(e);
+      } finally {
+        ProgressChangedListener.fireComplete(availableUpdateProgressChangedListener);
       }
-
-      return future.complete(updateInfos);
     });
 
     return future;
-  }
-
-  @FunctionalInterface
-  public interface UpdateFetchingProgressChangedListener {
-    /**
-     * Invoken when the progress of fetching an update is changed.
-     * @param currentProgress the current fetching progress
-     * @param total the total progress needed to complete the update fetching
-     */
-    void onChange(long currentProgress, long total);
   }
 }

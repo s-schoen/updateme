@@ -33,8 +33,8 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
   }
 
   @Override
-  public void createChannel(String channelName) throws UpdateRepositoryException {
-    checkChannelExistance(channelName, true);
+  public void createChannel(String channelName, ProgressChangedListener progress) throws UpdateRepositoryException {
+    checkChannelExistence(channelName, true);
 
     // create channel directory
     try {
@@ -45,7 +45,7 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
   }
 
   @Override
-  public void initStructure() throws UpdateRepositoryException {
+  public void initStructure(ProgressChangedListener progress) throws UpdateRepositoryException {
     // create default channel
     try {
       Files.createDirectory(Paths.get(baseDirectory.getAbsolutePath(), UpdateRepositoryManipulator.DEFAULT_CHANNEL));
@@ -55,8 +55,8 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
   }
 
   @Override
-  public void pushUpdate(File updatePackage, String channel) throws UpdateRepositoryException {
-    checkChannelExistance(channel, false);
+  public void pushUpdate(File updatePackage, String channel, ProgressChangedListener progress) throws UpdateRepositoryException {
+    checkChannelExistence(channel, false);
 
     Path channelPath = Paths.get(baseDirectory.getAbsolutePath(), channel);
     Update update;
@@ -82,11 +82,10 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
     } catch (IOException e) {
       throw new UpdateRepositoryException("Could not push update package", e);
     }
-
   }
 
   @Override
-  public List<String> availableChannels() throws UpdateRepositoryException {
+  public List<String> availableChannels(ProgressChangedListener progress) throws UpdateRepositoryException {
     try {
       List<Object> collect = Files
               .list(Paths.get(baseDirectory.getAbsolutePath()))
@@ -101,8 +100,8 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
   }
 
   @Override
-  public List<File> updateInfoFiles(String channel) throws UpdateRepositoryException {
-    checkChannelExistance(channel, false);
+  public List<File> updateInfoFiles(String channel, ProgressChangedListener progress) throws UpdateRepositoryException {
+    checkChannelExistence(channel, false);
 
     List<File> updateInfoFiles = new ArrayList<>();
 
@@ -125,8 +124,8 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
   }
 
   @Override
-  public File pullUpdate(String version, String channel) throws UpdateRepositoryException {
-    checkChannelExistance(channel, false);
+  public File pullUpdate(String version, String channel, ProgressChangedListener progress) throws UpdateRepositoryException {
+    checkChannelExistence(channel, false);
     Path channelPath = Paths.get(baseDirectory.getAbsolutePath(), channel);
 
     if (!Files.exists(Paths.get(channelPath.toString(), version))) {
@@ -142,7 +141,7 @@ public class LocalUpdateRepository implements UpdateRepositoryManipulator {
     return updatePackagePath.toFile();
   }
 
-  private void checkChannelExistance(String channelName, boolean throwWhenExists) throws UpdateRepositoryException {
+  private void checkChannelExistence(String channelName, boolean throwWhenExists) throws UpdateRepositoryException {
     try {
       boolean channelExists = Files
           .list(Paths.get(baseDirectory.getAbsolutePath()))
